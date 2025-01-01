@@ -6,11 +6,15 @@
   "files.trimFinalNewlines": false,
   "cmake.configureOnOpen": false,
   "[cpp]": {
+<<<<<<< HEAD
     "editor.defaultFormatter": "ms-vscode.cpptools"
   },
   "files.associations": {
     "stdexcept": "cpp",
     "string": "cpp",
     "memory": "cpp"
+=======
+    "editor.defaultFormatter": "trunk.io"
+>>>>>>> 9abd07bb0535d67ad807800aba854f11aaf61395
   }
 }
