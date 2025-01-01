@@ -4,5 +4,13 @@
   "trunk.enableWindows": true,
   "files.insertFinalNewline": false,
   "files.trimFinalNewlines": false,
-  "cmake.configureOnOpen": false
+  "cmake.configureOnOpen": false,
+  "[cpp]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  },
+  "files.associations": {
+    "stdexcept": "cpp",
+    "string": "cpp",
+    "memory": "cpp"
+  }
 }
