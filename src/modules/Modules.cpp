@@ -90,161 +90,175 @@
 #include "modules/DropzoneModule.h"
 #endif
 
+#include "modules/Rangefind.h"
+
 /**
  * Create module instances here.  If you are adding a new module, you must 'new' it here (or somewhere else)
  */
 void setupModules()
 {
-    if (config.device.role != meshtastic_Config_DeviceConfig_Role_REPEATER) {
+        if (config.device.role != meshtastic_Config_DeviceConfig_Role_REPEATER)
+        {
 #if (HAS_BUTTON || ARCH_PORTDUINO) && !MESHTASTIC_EXCLUDE_INPUTBROKER
-        inputBroker = new InputBroker();
+                inputBroker = new InputBroker();
 #endif
 #if !MESHTASTIC_EXCLUDE_ADMIN
-        adminModule = new AdminModule();
+                adminModule = new AdminModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_NODEINFO
-        nodeInfoModule = new NodeInfoModule();
+                nodeInfoModule = new NodeInfoModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_GPS
-        positionModule = new PositionModule();
+                positionModule = new PositionModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_WAYPOINT
-        waypointModule = new WaypointModule();
+                waypointModule = new WaypointModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_TEXTMESSAGE
-        textMessageModule = new TextMessageModule();
+                textMessageModule = new TextMessageModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_TRACEROUTE
-        traceRouteModule = new TraceRouteModule();
+                traceRouteModule = new TraceRouteModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_NEIGHBORINFO
-        neighborInfoModule = new NeighborInfoModule();
+                neighborInfoModule = new NeighborInfoModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_DETECTIONSENSOR
-        detectionSensorModule = new DetectionSensorModule();
+                detectionSensorModule = new DetectionSensorModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_ATAK
-        atakPluginModule = new AtakPluginModule();
+                atakPluginModule = new AtakPluginModule();
 #endif
 
 #if !MESHTASTIC_EXCLUDE_DROPZONE
-        dropzoneModule = new DropzoneModule();
+                dropzoneModule = new DropzoneModule();
 #endif
-        // Note: if the rest of meshtastic doesn't need to explicitly use your module, you do not need to assign the instance
-        // to a global variable.
+                // Note: if the rest of meshtastic doesn't need to explicitly use your module, you do not need to assign the instance
+                // to a global variable.
 
 #if !MESHTASTIC_EXCLUDE_REMOTEHARDWARE
-        new RemoteHardwareModule();
+                new RemoteHardwareModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_POWERSTRESS
-        new PowerStressModule();
+                new PowerStressModule();
 #endif
-        // Example: Put your module here
-        // new ReplyModule();
+                // Example: Put your module here
+                // new ReplyModule();
 #if (HAS_BUTTON || ARCH_PORTDUINO) && !MESHTASTIC_EXCLUDE_INPUTBROKER
-        rotaryEncoderInterruptImpl1 = new RotaryEncoderInterruptImpl1();
-        if (!rotaryEncoderInterruptImpl1->init()) {
-            delete rotaryEncoderInterruptImpl1;
-            rotaryEncoderInterruptImpl1 = nullptr;
-        }
-        upDownInterruptImpl1 = new UpDownInterruptImpl1();
-        if (!upDownInterruptImpl1->init()) {
-            delete upDownInterruptImpl1;
-            upDownInterruptImpl1 = nullptr;
-        }
+                rotaryEncoderInterruptImpl1 = new RotaryEncoderInterruptImpl1();
+                if (!rotaryEncoderInterruptImpl1->init())
+                {
+                        delete rotaryEncoderInterruptImpl1;
+                        rotaryEncoderInterruptImpl1 = nullptr;
+                }
+                upDownInterruptImpl1 = new UpDownInterruptImpl1();
+                if (!upDownInterruptImpl1->init())
+                {
+                        delete upDownInterruptImpl1;
+                        upDownInterruptImpl1 = nullptr;
+                }
 
 #if HAS_SCREEN
-        // In order to have the user button dismiss the canned message frame, this class lightly interacts with the Screen class
-        scanAndSelectInput = new ScanAndSelectInput();
-        if (!scanAndSelectInput->init()) {
-            delete scanAndSelectInput;
-            scanAndSelectInput = nullptr;
-        }
+                // In order to have the user button dismiss the canned message frame, this class lightly interacts with the Screen class
+                scanAndSelectInput = new ScanAndSelectInput();
+                if (!scanAndSelectInput->init())
+                {
+                        delete scanAndSelectInput;
+                        scanAndSelectInput = nullptr;
+                }
 #endif
 
-        cardKbI2cImpl = new CardKbI2cImpl();
-        cardKbI2cImpl->init();
+                cardKbI2cImpl = new CardKbI2cImpl();
+                cardKbI2cImpl->init();
 #ifdef INPUTBROKER_MATRIX_TYPE
-        kbMatrixImpl = new KbMatrixImpl();
-        kbMatrixImpl->init();
+                kbMatrixImpl = new KbMatrixImpl();
+                kbMatrixImpl->init();
 #endif // INPUTBROKER_MATRIX_TYPE
 #ifdef INPUTBROKER_SERIAL_TYPE
-        aSerialKeyboardImpl = new SerialKeyboardImpl();
-        aSerialKeyboardImpl->init();
+                aSerialKeyboardImpl = new SerialKeyboardImpl();
+                aSerialKeyboardImpl->init();
 #endif // INPUTBROKER_MATRIX_TYPE
 #endif // HAS_BUTTON
 #if ARCH_PORTDUINO && !HAS_TFT
-        aLinuxInputImpl = new LinuxInputImpl();
-        aLinuxInputImpl->init();
+                aLinuxInputImpl = new LinuxInputImpl();
+                aLinuxInputImpl->init();
 #endif
 #if HAS_TRACKBALL && !MESHTASTIC_EXCLUDE_INPUTBROKER
-        trackballInterruptImpl1 = new TrackballInterruptImpl1();
-        trackballInterruptImpl1->init();
+                trackballInterruptImpl1 = new TrackballInterruptImpl1();
+                trackballInterruptImpl1->init();
 #endif
 #ifdef INPUTBROKER_EXPRESSLRSFIVEWAY_TYPE
-        expressLRSFiveWayInput = new ExpressLRSFiveWay();
+                expressLRSFiveWayInput = new ExpressLRSFiveWay();
 #endif
 #if HAS_SCREEN && !MESHTASTIC_EXCLUDE_CANNEDMESSAGES
-        cannedMessageModule = new CannedMessageModule();
+                cannedMessageModule = new CannedMessageModule();
 #endif
 #if HAS_TELEMETRY
-        new DeviceTelemetryModule();
+                new DeviceTelemetryModule();
 #endif
 #if HAS_SENSOR && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
-        new EnvironmentTelemetryModule();
-        if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].first > 0) {
-            new AirQualityTelemetryModule();
-        }
+                new EnvironmentTelemetryModule();
+                if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_PMSA003I].first > 0)
+                {
+                        new AirQualityTelemetryModule();
+                }
 #if !MESHTASTIC_EXCLUDE_HEALTH_TELEMETRY
-        if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MAX30102].first > 0 ||
-            nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MLX90614].first > 0) {
-            new HealthTelemetryModule();
-        }
+                if (nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MAX30102].first > 0 ||
+                    nodeTelemetrySensorsMap[meshtastic_TelemetrySensorType_MLX90614].first > 0)
+                {
+                        new HealthTelemetryModule();
+                }
 #endif
 #endif
 #if HAS_TELEMETRY && !MESHTASTIC_EXCLUDE_POWER_TELEMETRY && !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR
-        new PowerTelemetryModule();
+                new PowerTelemetryModule();
 #endif
-#if (defined(ARCH_ESP32) || defined(ARCH_NRF52) || defined(ARCH_RP2040)) && !defined(CONFIG_IDF_TARGET_ESP32S2) &&               \
+#if (defined(ARCH_ESP32) || defined(ARCH_NRF52) || defined(ARCH_RP2040)) && !defined(CONFIG_IDF_TARGET_ESP32S2) && \
     !defined(CONFIG_IDF_TARGET_ESP32C3)
 #if !MESHTASTIC_EXCLUDE_SERIAL
-        new SerialModule();
+                new SerialModule();
 #endif
 #endif
 #ifdef ARCH_ESP32
-        // Only run on an esp32 based device.
+                // Only run on an esp32 based device.
 #if defined(USE_SX1280) && !MESHTASTIC_EXCLUDE_AUDIO
-        audioModule = new AudioModule();
+                audioModule = new AudioModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_PAXCOUNTER
-        paxcounterModule = new PaxcounterModule();
+                paxcounterModule = new PaxcounterModule();
 #endif
 #endif
 #if defined(ARCH_ESP32) || defined(ARCH_PORTDUINO)
 #if !MESHTASTIC_EXCLUDE_STOREFORWARD
-        storeForwardModule = new StoreForwardModule();
+                storeForwardModule = new StoreForwardModule();
 #endif
 #endif
 #if defined(ARCH_ESP32) || defined(ARCH_NRF52) || defined(ARCH_RP2040) || defined(ARCH_PORTDUINO)
 #if !MESHTASTIC_EXCLUDE_EXTERNALNOTIFICATION
-        externalNotificationModule = new ExternalNotificationModule();
+                externalNotificationModule = new ExternalNotificationModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_RANGETEST && !MESHTASTIC_EXCLUDE_GPS
-        new RangeTestModule();
+                new RangeTestModule();
 #endif
 #endif
-    } else {
+        }
+        else
+        {
 #if !MESHTASTIC_EXCLUDE_ADMIN
-        adminModule = new AdminModule();
+                adminModule = new AdminModule();
 #endif
 #if HAS_TELEMETRY
-        new DeviceTelemetryModule();
+                new DeviceTelemetryModule();
 #endif
 #if !MESHTASTIC_EXCLUDE_TRACEROUTE
-        traceRouteModule = new TraceRouteModule();
+                traceRouteModule = new TraceRouteModule();
 #endif
-    }
-    // NOTE! This module must be added LAST because it likes to check for replies from other modules and avoid sending extra
-    // acks
-    routingModule = new RoutingModule();
+        }
+        // NOTE! This module must be added LAST because it likes to check for replies from other modules and avoid sending extra
+        // acks
+#if MESHTASTIC_EXCLUDE_SERIAL && !MESHTASTIC_EXCLUDE_RANGEFINDER
+        // NOTE! Rangefinder uses the same serial interface as the SerialModule. Thus cannot be used at the same time.
+        rangefind = new Rangefind();
+#endif
+        routingModule = new RoutingModule();
 }

@@ -8,11 +8,12 @@
  * If you are using protobufs to encode your packets (recommended) you can use this as a baseclass for your module
  * and avoid a bunch of boilerplate code.
  */
-template <class T> class ProtobufModule : protected SinglePortModule
+template <class T>
+class ProtobufModule : protected SinglePortModule
 {
     const pb_msgdesc_t *fields;
 
-  public:
+public:
     uint8_t numOnlineNodes = 0;
     /** Constructor
      * name is for debugging output
@@ -22,7 +23,7 @@ template <class T> class ProtobufModule : protected SinglePortModule
     {
     }
 
-  protected:
+protected:
     /**
      * Handle a received message, the data field in the message is already decoded and is provided
      *
@@ -33,7 +34,7 @@ template <class T> class ProtobufModule : protected SinglePortModule
 
     /** Called to make changes to a particular incoming message
      */
-    virtual void alterReceivedProtobuf(meshtastic_MeshPacket &mp, T *decoded){};
+    virtual void alterReceivedProtobuf(meshtastic_MeshPacket &mp, T *decoded) {};
 
     /**
      * Return a mesh packet which has been preinited with a particular protobuf data payload and port number.
@@ -64,13 +65,14 @@ template <class T> class ProtobufModule : protected SinglePortModule
 
     int handleStatusUpdate(const meshtastic::Status *arg)
     {
-        if (arg->getStatusType() == STATUS_TYPE_NODE) {
+        if (arg->getStatusType() == STATUS_TYPE_NODE)
+        {
             numOnlineNodes = nodeStatus->getNumOnline();
         }
         return 0;
     }
 
-  private:
+private:
     /** Called to handle a particular incoming message
 
     @return ProcessMessage::STOP if you've guaranteed you've handled this message and no other handlers should be considered for
@@ -86,11 +88,15 @@ template <class T> class ProtobufModule : protected SinglePortModule
 
         T scratch;
         T *decoded = NULL;
-        if (mp.which_payload_variant == meshtastic_MeshPacket_decoded_tag && mp.decoded.portnum == ourPortNum) {
+        if (mp.which_payload_variant == meshtastic_MeshPacket_decoded_tag && mp.decoded.portnum == ourPortNum)
+        {
             memset(&scratch, 0, sizeof(scratch));
-            if (pb_decode_from_bytes(p.payload.bytes, p.payload.size, fields, &scratch)) {
+            if (pb_decode_from_bytes(p.payload.bytes, p.payload.size, fields, &scratch))
+            {
                 decoded = &scratch;
-            } else {
+            }
+            else
+            {
                 LOG_ERROR("Error decoding proto module!");
                 // if we can't decode it, nobody can process it!
                 return ProcessMessage::STOP;
@@ -106,12 +112,16 @@ template <class T> class ProtobufModule : protected SinglePortModule
     {
         T scratch;
         T *decoded = NULL;
-        if (mp.which_payload_variant == meshtastic_MeshPacket_decoded_tag && mp.decoded.portnum == ourPortNum) {
+        if (mp.which_payload_variant == meshtastic_MeshPacket_decoded_tag && mp.decoded.portnum == ourPortNum)
+        {
             memset(&scratch, 0, sizeof(scratch));
             const meshtastic_Data &p = mp.decoded;
-            if (pb_decode_from_bytes(p.payload.bytes, p.payload.size, fields, &scratch)) {
+            if (pb_decode_from_bytes(p.payload.bytes, p.payload.size, fields, &scratch))
+            {
                 decoded = &scratch;
-            } else {
+            }
+            else
+            {
                 LOG_ERROR("Error decoding proto module!");
                 // if we can't decode it, nobody can process it!
                 return;

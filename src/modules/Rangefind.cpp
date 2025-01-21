@@ -1,14 +1,30 @@
 #include "Rangefind.h"
+#include <Adafruit_BNO08x.h>
+#include "PositionModule.h"
+#include "Default.h"
+#include "GPS.h"
+#include "MeshService.h"
+#include "NodeDB.h"
+#include "RTC.h"
+#include "Router.h"
+#include "TypeConversions.h"
+#include "airtime.h"
+#include "configuration.h"
+#include "gps/GeoCoord.h"
+#include "main.h"
+#include "mesh/compression/unishox2.h"
+#include "meshUtils.h"
+#include "meshtastic/atak.pb.h"
+#include "sleep.h"
+#include "target_specific.h"
+#include <Throttle.h>
+
+#define RANGEFIND_BUTTON GPIO_NUM_48
 
 char buff[4] = {0x80, 0x06, 0x03, 0x77};
 unsigned char data[11] = {0};
 
-#define RANGEFINDER_RX 2
-#define RANGEFINDER_TX 3
-
 #define BNO08X_RESET -1
-
-Rangefind *rangefinder = nullptr;
 
 struct euler_t
 {
@@ -31,9 +47,10 @@ long reportIntervalUs = 5000;
 Adafruit_BNO08x bno08x(BNO08X_RESET);
 sh2_SensorValue_t sensorValue;
 
-SoftwareSerial rangefinderSerial(RANGEFINDER_RX, RANGEFINDER_TX);
+HardwareSerial rangefinderSerial(0);
 
 bool failedIMU = false;
+bool rangeButtonPressed = false;
 
 void setReports()
 {
@@ -43,12 +60,12 @@ void setReports()
     }
 }
 
-Rangefind *Rangefind::createRangefinder()
+Rangefind::Rangefind() : ProtobufModule("rangefind", meshtastic_PortNum_WAYPOINT_APP, &meshtastic_Position_msg), concurrency::OSThread("Rangefind")
 {
-    Rangefind *rangefind = new Rangefind();
-    rangefind->setupRangefinder();
-    return rangefind;
+    setupRangefinder();
 }
+
+Rangefind *rangefind;
 
 DBH dbh;
 
@@ -60,6 +77,7 @@ void Rangefind::setupRangefinder()
     dbh.altitude = -1.0;
     dbh.bearing = -1.0;
     dbh.distance = -1.0;
+    pinMode(RANGEFIND_BUTTON, INPUT_PULLUP);
 
     // Set up the BNO08x
 
@@ -255,6 +273,139 @@ DBH Rangefind::getDBH()
     dbh.altitude = sin(pitch) * distance;
 
     return dbh;
+}
+
+void Rangefind::sendPointOfInterest()
+{
+
+    getDBH();
+    if (dbh.distance < 0.0)
+    {
+        return;
+    }
+
+    meshtastic_NodeInfoLite *node = service->refreshLocalMeshNode();
+    assert(node->has_position);
+
+    uint32_t pos_flags = config.position.position_flags;
+
+    // Populate a Position struct with ONLY the requested fields
+    meshtastic_Position p = meshtastic_Position_init_default; //   Start with an empty structure
+
+    if (localPosition.latitude_i == 0 && localPosition.longitude_i == 0)
+    {
+        nodeDB->setLocalPosition(TypeConversions::ConvertToPosition(node->position));
+    }
+    localPosition.seq_number++;
+
+    if (localPosition.latitude_i == 0 && localPosition.longitude_i == 0)
+    {
+        return;
+    }
+
+    GeoCoord *current = new GeoCoord(localPosition.latitude_i, localPosition.longitude_i, localPosition.altitude);
+    p.latitude_i = (current->pointAtDistance(dbh.distance, dbh.bearing))->getLatitude();
+    p.longitude_i = (current->pointAtDistance(dbh.distance, dbh.bearing))->getLongitude();
+    // TODO: Precision. Currently its just the perfect accuracy
+    p.precision_bits = 32; // change to precision when implemented
+    p.has_latitude_i = true;
+    p.has_longitude_i = true;
+
+    if (getValidTime(RTCQualityNTP) > 0)
+    {
+        p.time = getValidTime(RTCQualityNTP);
+    }
+    else if (rtc_found.address != ScanI2C::ADDRESS_NONE.address)
+    {
+        LOG_INFO("Use RTC time for position");
+        p.time = getValidTime(RTCQualityDevice);
+    }
+    else if (getRTCQuality() < RTCQualityNTP)
+    {
+        LOG_INFO("Strip low RTCQuality (%d) time from position", getRTCQuality());
+        p.time = 0;
+    }
+
+    if (config.position.fixed_position)
+    {
+        p.location_source = meshtastic_Position_LocSource_LOC_MANUAL;
+    }
+    else
+    {
+        p.location_source = localPosition.location_source;
+    }
+
+    if (pos_flags & meshtastic_Config_PositionConfig_PositionFlags_ALTITUDE)
+    {
+        if (pos_flags & meshtastic_Config_PositionConfig_PositionFlags_ALTITUDE_MSL)
+        {
+            p.altitude = localPosition.altitude + dbh.altitude;
+            p.has_altitude = true;
+        }
+        else
+        {
+            p.altitude_hae = localPosition.altitude_hae;
+            p.has_altitude_hae = true;
+        }
+
+        if (pos_flags & meshtastic_Config_PositionConfig_PositionFlags_GEOIDAL_SEPARATION)
+        {
+            p.altitude_geoidal_separation = localPosition.altitude_geoidal_separation + dbh.altitude;
+            p.has_altitude_geoidal_separation = true;
+        }
+    }
+
+    if (pos_flags & meshtastic_Config_PositionConfig_PositionFlags_SATINVIEW)
+        p.sats_in_view = localPosition.sats_in_view;
+
+    if (pos_flags & meshtastic_Config_PositionConfig_PositionFlags_TIMESTAMP)
+        p.timestamp = localPosition.timestamp;
+
+    if (pos_flags & meshtastic_Config_PositionConfig_PositionFlags_SEQ_NO)
+        p.seq_number = localPosition.seq_number;
+
+    if (pos_flags & meshtastic_Config_PositionConfig_PositionFlags_HEADING)
+    {
+        p.ground_track = localPosition.ground_track;
+        p.has_ground_track = true;
+    }
+
+    if (pos_flags & meshtastic_Config_PositionConfig_PositionFlags_SPEED)
+    {
+        p.ground_speed = localPosition.ground_speed;
+        p.has_ground_speed = true;
+    }
+
+    meshtastic_MeshPacket *packet = allocDataPacket();
+    packet->to = NODENUM_BROADCAST;
+    char *message = new char[60];
+    sprintf(message, "New POI, %.7f, %.7f, %.2f\a", p.latitude_i * 1e-7, p.longitude_i * 1e-7, p.altitude);
+    packet->decoded.portnum = meshtastic_PortNum_TEXT_MESSAGE_APP;
+    packet->want_ack = false;
+
+    service->sendToMesh(packet, RX_SRC_LOCAL, true);
+    delete[] message;
+}
+
+int32_t Rangefind::runOnce()
+{
+    if (digitalRead(RANGEFIND_BUTTON) == LOW)
+    {
+        rangeButtonPressed = true;
+        sendPointOfInterest();
+        return 500;
+    }
+    else
+    {
+        rangeButtonPressed = false;
+    }
+
+    return 50;
+}
+
+bool Rangefind::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_Position *pptr)
+{
+    return false;
 }
 
 float Rangefind::getBearing()

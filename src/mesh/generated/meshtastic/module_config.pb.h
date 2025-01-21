@@ -79,7 +79,9 @@ typedef enum _meshtastic_ModuleConfig_SerialConfig_Serial_Mode {
     /* NMEA messages specifically tailored for CalTopo */
     meshtastic_ModuleConfig_SerialConfig_Serial_Mode_CALTOPO = 5,
     /* Ecowitt WS85 weather station */
-    meshtastic_ModuleConfig_SerialConfig_Serial_Mode_WS85 = 6
+    meshtastic_ModuleConfig_SerialConfig_Serial_Mode_WS85 = 6,
+    /* Drone MSP Commands and Telemetry*/
+    meshtastic_ModuleConfig_SerialConfig_Serial_Mode_MSP = 7
 } meshtastic_ModuleConfig_SerialConfig_Serial_Mode;
 
 /* TODO: REPLACE */
